@@ -25,36 +25,11 @@ export function WelcomeBanner({ language, onNavigate }: WelcomeBannerProps) {
           <span>{t.home.welcome_title}</span>
         </div>
 
-        <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+        <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">
           {t.home.welcome_desc}
         </h3>
 
-        {/* Feature quick info grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-          <div className="flex items-start space-x-3 bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/5">
-            <Camera className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
-            <div>
-              <h5 className="text-xs font-bold">100% Offline Scanning</h5>
-              <p className="text-[10px] text-white/80 mt-0.5">Capture documents natively in device sandboxes.</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3 bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/5">
-            <FileText className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
-            <div>
-              <h5 className="text-xs font-bold">Multi-Format Outputs</h5>
-              <p className="text-[10px] text-white/80 mt-0.5">Form compiled PDFs, extract archives or zips.</p>
-            </div>
-          </div>
-          <div className="flex items-start space-x-3 bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/5">
-            <Shield className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
-            <div>
-              <h5 className="text-xs font-bold">Absolute Privacy</h5>
-              <p className="text-[10px] text-white/80 mt-0.5">Pixel structures process inside browser thread memory.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-4 flex flex-wrap gap-3">
+        <div className="pt-2 flex flex-wrap gap-3">
           <button
             onClick={() => onNavigate('scanner')}
             className="px-5 py-2.5 bg-white text-[#007AFF] hover:bg-gray-50 text-xs font-extrabold rounded-xl shadow-md cursor-pointer transition-transform hover:scale-[1.02]"

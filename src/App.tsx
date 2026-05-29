@@ -264,14 +264,9 @@ export default function App() {
 
             {/* Offline-First notifications warning banner */}
             {!isOnline && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-500/10 rounded-2xl flex items-start space-x-3 text-amber-600 dark:text-amber-400">
-                <HardDrive className="w-5 h-5 flex-shrink-0 mt-0.5 animate-pulse" />
-                <div>
-                  <h5 className="font-extrabold text-sm">Offline Workspace Active</h5>
-                  <p className="text-xs leading-relaxed mt-1 font-medium text-amber-700 dark:text-amber-500">
-                    You can capture new photos, apply high-contrast shaders, and export fully compiled PDFs seamlessly without internet connection. Cloud-based Gemini OCR text translation services will automatically resume when online network connection is restored.
-                  </p>
-                </div>
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/10 border border-amber-500/10 rounded-xl flex items-center space-x-2 text-amber-600 dark:text-amber-400 text-xs">
+                <HardDrive className="w-4 h-4 flex-shrink-0 animate-pulse" />
+                <span className="font-semibold">Offline Mode Enabled — All scanner tools work 100% locally.</span>
               </div>
             )}
 

@@ -25,6 +25,101 @@ export function EnhanceEditor({
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [compareMode, setCompareMode] = useState<'both' | 'original' | 'enhanced'>('enhanced');
 
+  const [naturalDims, setNaturalDims] = useState<{ w: number; h: number } | null>(null);
+  const [crop, setCrop] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
+
+  // Fetch original image natural dimensions
+  useEffect(() => {
+    if (page.originalUrl) {
+      const img = new Image();
+      img.src = page.originalUrl;
+      img.onload = () => {
+        setNaturalDims({ w: img.width, h: img.height });
+      };
+    }
+  }, [page.originalUrl]);
+
+  // Synchronize crop percentages based on config.cropRect
+  useEffect(() => {
+    if (naturalDims) {
+      const rotW = (config.rotation === 90 || config.rotation === 270) ? naturalDims.h : naturalDims.w;
+      const rotH = (config.rotation === 90 || config.rotation === 270) ? naturalDims.w : naturalDims.h;
+
+      if (config.cropRect) {
+        setCrop({
+          left: Math.round((config.cropRect.x / rotW) * 100),
+          top: Math.round((config.cropRect.y / rotH) * 100),
+          right: Math.max(0, Math.round((1 - (config.cropRect.x + config.cropRect.w) / rotW) * 100)),
+          bottom: Math.max(0, Math.round((1 - (config.cropRect.y + config.cropRect.h) / rotH) * 100)),
+        });
+      } else {
+        setCrop({ left: 0, top: 0, right: 0, bottom: 0 });
+      }
+    }
+  }, [naturalDims, config.cropRect, config.rotation]);
+
+  const handleCropSliderChange = (edge: 'left' | 'top' | 'right' | 'bottom', value: number) => {
+    if (!naturalDims) return;
+    
+    const nextCrop = { ...crop, [edge]: value };
+    
+    // Bounds check to ensure at least 10% space remains
+    if (edge === 'left' || edge === 'right') {
+      if (nextCrop.left + nextCrop.right > 90) return;
+    } else {
+      if (nextCrop.top + nextCrop.bottom > 90) return;
+    }
+    
+    setCrop(nextCrop);
+    applyCropRect(nextCrop);
+  };
+
+  const applyCropRect = (currentCrop: typeof crop) => {
+    if (!naturalDims) return;
+    
+    const rotW = (config.rotation === 90 || config.rotation === 270) ? naturalDims.h : naturalDims.w;
+    const rotH = (config.rotation === 90 || config.rotation === 270) ? naturalDims.w : naturalDims.h;
+
+    const left = Math.max(0, Math.min(100, currentCrop.left));
+    const top = Math.max(0, Math.min(100, currentCrop.top));
+    const right = Math.max(0, Math.min(100 - left, currentCrop.right));
+    const bottom = Math.max(0, Math.min(100 - top, currentCrop.bottom));
+
+    if (left === 0 && top === 0 && right === 0 && bottom === 0) {
+      updateSetting('cropRect', null);
+    } else {
+      const x = Math.round((left / 100) * rotW);
+      const y = Math.round((top / 100) * rotH);
+      const w = Math.round(((100 - left - right) / 100) * rotW);
+      const h = Math.round(((100 - top - bottom) / 100) * rotH);
+      updateSetting('cropRect', { x, y, w, h });
+    }
+  };
+
+  const applyCropPreset = (type: 'none' | 'edge' | 'left-half' | 'right-half' | 'compact') => {
+    let nextCrop = { left: 0, top: 0, right: 0, bottom: 0 };
+    switch (type) {
+      case 'edge':
+        nextCrop = { left: 5, top: 5, right: 5, bottom: 5 };
+        break;
+      case 'left-half':
+        nextCrop = { left: 0, top: 0, right: 50, bottom: 0 };
+        break;
+      case 'right-half':
+        nextCrop = { left: 50, top: 0, right: 0, bottom: 0 };
+        break;
+      case 'compact':
+        nextCrop = { left: 15, top: 15, right: 15, bottom: 15 };
+        break;
+      case 'none':
+      default:
+        nextCrop = { left: 0, top: 0, right: 0, bottom: 0 };
+        break;
+    }
+    setCrop(nextCrop);
+    applyCropRect(nextCrop);
+  };
+
   // Trigger real-time canvas render when filters/sliders change
   useEffect(() => {
     let active = true;
@@ -174,12 +269,33 @@ export function EnhanceEditor({
               </div>
             )}
             
-            <img
-              src={compareMode === 'original' ? page.originalUrl : processedUrl}
-              alt="Processed Viewport"
-              className="max-w-full max-h-full object-contain shadow-lg rounded-sm rounded-borders transition-opacity filter duration-200"
-              id="enhance-preview-view"
-            />
+            <div className="relative max-w-full max-h-full flex items-center justify-center">
+              <img
+                src={compareMode === 'original' ? page.originalUrl : processedUrl}
+                alt="Processed Viewport"
+                className="max-w-full max-h-full object-contain shadow-lg rounded-sm rounded-borders transition-opacity filter duration-200"
+                id="enhance-preview-view"
+              />
+              
+              {/* Overlapping crop margins representation when viewing original or configuring crop */}
+              {compareMode === 'original' && (crop.left > 0 || crop.top > 0 || crop.right > 0 || crop.bottom > 0) && (
+                <div className="absolute inset-0 pointer-events-none" id="crop-preview-box">
+                  {/* Surrounding shaded borders or outlines */}
+                  <div className="absolute inset-0 border border-dashed border-emerald-500/80 bg-black/40 flex items-center justify-center"
+                       style={{
+                         left: `${crop.left}%`,
+                         top: `${crop.top}%`,
+                         right: `${crop.right}%`,
+                         bottom: `${crop.bottom}%`
+                       }}>
+                    {/* Pulsing indicator label */}
+                    <span className="text-[10px] text-emerald-300 font-extrabold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30 whitespace-nowrap shadow-md animate-pulse">
+                      ✂️ CROP PORTION ACTIVE
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="text-center">
@@ -251,6 +367,146 @@ export function EnhanceEditor({
                   />
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Document Precision Crop Option */}
+          <div className="bg-white dark:bg-white/5 dark:backdrop-blur-md rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-white/10 transition-colors duration-300 space-y-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center space-x-1.5" id="crop-section-header">
+              <Scissors className="w-4 h-4 text-[#007AFF]" />
+              <span>{t.enhance.crop}</span>
+            </h3>
+
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {t.enhance.crop_hint}
+            </p>
+
+            {/* Quick Crop Presets */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => applyCropPreset('none')}
+                className={`py-1.5 px-2 border text-xs font-semibold rounded-lg transition-all ${
+                  crop.left === 0 && crop.top === 0 && crop.right === 0 && crop.bottom === 0
+                    ? 'border-[#007AFF] bg-[#007AFF]/10 text-[#007AFF]'
+                    : 'border-gray-205 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                No Crop
+              </button>
+              <button
+                onClick={() => applyCropPreset('edge')}
+                className={`py-1.5 px-2 border text-xs font-semibold rounded-lg transition-all ${
+                  crop.left === 5 && crop.top === 5 && crop.right === 5 && crop.bottom === 5
+                    ? 'border-[#007AFF] bg-[#007AFF]/10 text-[#007AFF]'
+                    : 'border-gray-205 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+                }`}
+                title="5% Margin on all sides to clean desk borders"
+              >
+                🧹 Border Clean (5%)
+              </button>
+              <button
+                onClick={() => applyCropPreset('left-half')}
+                className={`py-1.5 px-2 border text-xs font-semibold rounded-lg transition-all ${
+                  crop.left === 0 && crop.right === 50
+                    ? 'border-[#007AFF] bg-[#007AFF]/10 text-[#007AFF]'
+                    : 'border-gray-205 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                📖 Left Half Page
+              </button>
+              <button
+                onClick={() => applyCropPreset('right-half')}
+                className={`py-1.5 px-2 border text-xs font-semibold rounded-lg transition-all ${
+                  crop.left === 50 && crop.right === 0
+                    ? 'border-[#007AFF] bg-[#007AFF]/10 text-[#007AFF]'
+                    : 'border-gray-205 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                📖 Right Half Page
+              </button>
+            </div>
+
+            {/* Hint to trigger Before view */}
+            {compareMode !== 'original' && (crop.left > 0 || crop.top > 0 || crop.right > 0 || crop.bottom > 0) && (
+              <button
+                onClick={() => setCompareMode('original')}
+                className="w-full py-1 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 text-[10px] font-bold rounded border border-amber-500/20 flex items-center justify-center space-x-1 transition-all cursor-pointer"
+              >
+                <span>💡 Tap here to view raw crop margins overlay box!</span>
+              </button>
+            )}
+
+            {/* Left Edge Crop Slider */}
+            <div className="space-y-1 pt-2">
+              <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+                <span>Left Boundary Cut</span>
+                <span>{crop.left}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="45"
+                value={crop.left}
+                onChange={(e) => handleCropSliderChange('left', Number(e.target.value))}
+                className="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            {/* Right Edge Crop Slider */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+                <span>Right Boundary Cut</span>
+                <span>{crop.right}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="45"
+                value={crop.right}
+                onChange={(e) => handleCropSliderChange('right', Number(e.target.value))}
+                className="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            {/* Top Edge Crop Slider */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+                <span>Top Boundary Cut</span>
+                <span>{crop.top}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="45"
+                value={crop.top}
+                onChange={(e) => handleCropSliderChange('top', Number(e.target.value))}
+                className="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            {/* Bottom Edge Crop Slider */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+                <span>Bottom Boundary Cut</span>
+                <span>{crop.bottom}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="45"
+                value={crop.bottom}
+                onChange={(e) => handleCropSliderChange('bottom', Number(e.target.value))}
+                className="w-full accent-emerald-500 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={() => applyCropPreset('none')}
+                className="text-[10px] text-gray-400 dark:text-gray-500 hover:text-rose-500 transition-colors font-bold uppercase tracking-wider"
+              >
+                Clear Crop Settings
+              </button>
             </div>
           </div>
 

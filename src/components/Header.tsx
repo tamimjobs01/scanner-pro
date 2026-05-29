@@ -41,9 +41,12 @@ export function Header({
           className="flex items-center space-x-3 cursor-pointer group"
           id="hdr-logo-container"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#007AFF] to-[#00C6FF] flex items-center justify-center text-white font-bold text-lg shadow-md dark:shadow-blue-glow group-hover:scale-105 transition-transform animate-pulse">
-            SP
-          </div>
+          <img
+            src="/app_pwa_logo.png"
+            alt="Scanner Pro Logo"
+            className="w-10 h-10 rounded-xl shadow-md dark:shadow-blue-glow group-hover:scale-105 transition-transform object-cover"
+            referrerPolicy="no-referrer"
+          />
           <div>
             <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white" id="hdr-title">
               {t.app_title}
