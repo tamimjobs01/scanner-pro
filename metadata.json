@@ -1,0 +1,10 @@
+{
+  "name": "Scanner Pro",
+  "description": "A completely free Progressive Web App (PWA) Document Scanner that works offline, enhances document quality, and converts between multiple formats with English & Bangla bilingual UI support.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

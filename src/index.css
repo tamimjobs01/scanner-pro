@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #0A0A0A;
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+/* Custom Scanning Laser Animation for Finder Overlays */
+@keyframes laser-sweep {
+  0% {
+    top: 5%;
+    opacity: 0.3;
+  }
+  50% {
+    top: 95%;
+    opacity: 0.8;
+  }
+  100% {
+    top: 5%;
+    opacity: 0.3;
+  }
+}
+
+.animate-laser {
+  animation: laser-sweep 3s ease-in-out infinite;
+}
+
+/* Radial Glow Pulsing backdrop simulation */
+@keyframes pulse-radial {
+  0%, 100% {
+    opacity: 0.15;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+.animate-pulse-radial {
+  animation: pulse-radial 8s ease-in-out infinite;
+}
+
+/* Custom shadow utilities matching the Immersive style guide */
+.shadow-blue-glow {
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+}
+
+.shadow-white-glow {
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+}
+
+.shadow-green-glow {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+}
